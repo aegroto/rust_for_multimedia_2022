@@ -2,7 +2,7 @@
 extern crate test;
 
 use image::GrayImage;
-use itertools::izip;
+use itertools::{izip, Itertools};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 #[cfg(test)]
@@ -50,6 +50,41 @@ pub fn convert(rgb_pixels: &[u8], y_pixels: &mut [u8], u_pixels: &mut [u8], v_pi
     }
 }
 
+pub fn convert_tuples(
+    rgb_data: &[u8],
+    y_pixels: &mut [u8],
+    u_pixels: &mut [u8],
+    v_pixels: &mut [u8],
+) {
+    let rgb_pixels = rgb_data.iter().tuples();
+
+    for (i, (r, g, b)) in rgb_pixels.enumerate() {
+        let (y, u, v) = rgb_to_yuv(*r, *g, *b);
+
+        y_pixels[i] = y;
+        u_pixels[i] = u;
+        v_pixels[i] = v;
+    }
+}
+
+pub fn convert_tuples_indexless(
+    rgb_data: &[u8],
+    y_pixels: &mut [u8],
+    u_pixels: &mut [u8],
+    v_pixels: &mut [u8],
+) {
+    let rgb_pixels = rgb_data.iter().tuples();
+
+    let iter = izip!(rgb_pixels, y_pixels, u_pixels, v_pixels);
+
+    for ((r_ref, g_ref, b_ref), y_ref, u_ref, v_ref) in iter {
+        let (y, u, v) = rgb_to_yuv(*r_ref, *g_ref, *b_ref);
+        *y_ref = y;
+        *u_ref = u;
+        *v_ref = v;
+    }
+}
+
 pub fn convert_iter(
     rgb_pixels: &[u8],
     y_pixels: &mut [u8],
@@ -75,7 +110,7 @@ pub fn convert_parallel(
     y_pixels: &mut [u8],
     u_pixels: &mut [u8],
     v_pixels: &mut [u8],
-    chunks_count: usize
+    chunks_count: usize,
 ) {
     let rgb_chunks = rgb_pixels.chunks(rgb_pixels.len() / chunks_count);
     let y_chunks = y_pixels.chunks_mut(y_pixels.len() / chunks_count);
@@ -84,9 +119,10 @@ pub fn convert_parallel(
 
     let iter = izip!(rgb_chunks, y_chunks, u_chunks, v_chunks);
 
-    iter.par_bridge().for_each(|(rgb_chunk, y_chunk, u_chunk, v_chunk)| {
-        convert(rgb_chunk, y_chunk, u_chunk, v_chunk);
-    });
+    iter.par_bridge()
+        .for_each(|(rgb_chunk, y_chunk, u_chunk, v_chunk)| {
+            convert(rgb_chunk, y_chunk, u_chunk, v_chunk);
+        });
 }
 
 fn rgb_to_yuv(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
