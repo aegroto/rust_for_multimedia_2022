@@ -48,6 +48,26 @@ pub fn convert(rgb_pixels: &[u8], y_pixels: &mut [u8], u_pixels: &mut [u8], v_pi
     }
 }
 
+pub fn convert_iter(
+    rgb_pixels: &[u8],
+    y_pixels: &mut [u8],
+    u_pixels: &mut [u8],
+    v_pixels: &mut [u8],
+) {
+    (0..y_pixels.len()).into_iter().for_each(|i| {
+        let (r, g, b) = (
+            rgb_pixels[i * 3],
+            rgb_pixels[i * 3 + 1],
+            rgb_pixels[i * 3 + 2],
+        );
+        let (y, u, v) = rgb_to_yuv(r, g, b);
+
+        y_pixels[i] = y;
+        u_pixels[i] = u;
+        v_pixels[i] = v;
+    });
+}
+
 fn rgb_to_yuv(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
     let r = r as f32;
     let g = g as f32;
