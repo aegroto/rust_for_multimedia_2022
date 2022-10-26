@@ -1,6 +1,13 @@
-use std::io::Cursor;
+#![feature(test)]
+extern crate test;
 
-use image::{DynamicImage, GrayImage, ImageFormat};
+use image::GrayImage;
+
+#[cfg(test)]
+mod benches;
+
+#[cfg(test)]
+mod tests;
 
 fn main() {
     let image = image::io::Reader::open("assets/myownlena.jpg")
@@ -26,7 +33,7 @@ fn save_grayscale(path: &str, pixels: Vec<u8>, width: u32, height: u32) {
     plane.save(path).unwrap();
 }
 
-fn convert(rgb_pixels: &[u8], y_pixels: &mut [u8], u_pixels: &mut [u8], v_pixels: &mut [u8]) {
+pub fn convert(rgb_pixels: &[u8], y_pixels: &mut [u8], u_pixels: &mut [u8], v_pixels: &mut [u8]) {
     for i in 0..y_pixels.len() {
         let (b, g, r) = (
             rgb_pixels[i * 3],
