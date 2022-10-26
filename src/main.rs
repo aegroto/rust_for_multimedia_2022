@@ -2,6 +2,8 @@
 extern crate test;
 
 use image::GrayImage;
+use itertools::izip;
+use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 #[cfg(test)]
 mod benches;
@@ -21,7 +23,7 @@ fn main() {
     let mut u_pixels = vec![0u8; pixels_count];
     let mut v_pixels = vec![0u8; pixels_count];
 
-    convert(rgb_pixels, &mut y_pixels, &mut u_pixels, &mut v_pixels);
+    convert_parallel(rgb_pixels, &mut y_pixels, &mut u_pixels, &mut v_pixels, 16);
 
     save_grayscale("planes/y.png", y_pixels, image.width(), image.height());
     save_grayscale("planes/u.png", u_pixels, image.width(), image.height());
@@ -65,6 +67,25 @@ pub fn convert_iter(
         y_pixels[i] = y;
         u_pixels[i] = u;
         v_pixels[i] = v;
+    });
+}
+
+pub fn convert_parallel(
+    rgb_pixels: &[u8],
+    y_pixels: &mut [u8],
+    u_pixels: &mut [u8],
+    v_pixels: &mut [u8],
+    chunks_count: usize
+) {
+    let rgb_chunks = rgb_pixels.chunks(rgb_pixels.len() / chunks_count);
+    let y_chunks = y_pixels.chunks_mut(y_pixels.len() / chunks_count);
+    let u_chunks = u_pixels.chunks_mut(u_pixels.len() / chunks_count);
+    let v_chunks = v_pixels.chunks_mut(v_pixels.len() / chunks_count);
+
+    let iter = izip!(rgb_chunks, y_chunks, u_chunks, v_chunks);
+
+    iter.par_bridge().for_each(|(rgb_chunk, y_chunk, u_chunk, v_chunk)| {
+        convert(rgb_chunk, y_chunk, u_chunk, v_chunk);
     });
 }
 
