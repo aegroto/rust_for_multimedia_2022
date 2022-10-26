@@ -4,12 +4,15 @@ extern crate test;
 use image::GrayImage;
 use itertools::{izip, Itertools};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
+use utils::allocate_yuv_buffers;
 
 #[cfg(test)]
 mod benches;
 
 #[cfg(test)]
 mod tests;
+
+mod utils;
 
 fn main() {
     let image = image::io::Reader::open("assets/myownlena.jpg")
@@ -18,10 +21,8 @@ fn main() {
         .unwrap();
 
     let rgb_pixels = image.as_bytes();
-    let pixels_count = (image.width() * image.height()) as usize;
-    let mut y_pixels = vec![0u8; pixels_count];
-    let mut u_pixels = vec![0u8; pixels_count];
-    let mut v_pixels = vec![0u8; pixels_count];
+    let (mut y_pixels, mut u_pixels, mut v_pixels) =
+        allocate_yuv_buffers(image.width(), image.height());
 
     convert_parallel(rgb_pixels, &mut y_pixels, &mut u_pixels, &mut v_pixels, 16);
 
