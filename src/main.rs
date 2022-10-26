@@ -35,20 +35,20 @@ fn save_grayscale(path: &str, pixels: Vec<u8>, width: u32, height: u32) {
 
 pub fn convert(rgb_pixels: &[u8], y_pixels: &mut [u8], u_pixels: &mut [u8], v_pixels: &mut [u8]) {
     for i in 0..y_pixels.len() {
-        let (b, g, r) = (
+        let (r, g, b) = (
             rgb_pixels[i * 3],
             rgb_pixels[i * 3 + 1],
             rgb_pixels[i * 3 + 2],
         );
-        let (y, u, v) = bgr_to_yuv_f32(b, g, r);
+        let (y, u, v) = rgb_to_yuv(r, g, b);
 
-        y_pixels[i] = y as u8;
-        u_pixels[i] = u as u8;
-        v_pixels[i] = v as u8;
+        y_pixels[i] = y;
+        u_pixels[i] = u;
+        v_pixels[i] = v;
     }
 }
 
-fn bgr_to_yuv_f32(b: u8, g: u8, r: u8) -> (f32, f32, f32) {
+fn rgb_to_yuv(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
     let r = r as f32;
     let g = g as f32;
     let b = b as f32;
@@ -57,5 +57,5 @@ fn bgr_to_yuv_f32(b: u8, g: u8, r: u8) -> (f32, f32, f32) {
     let u = (r * -0.16874 + g * -0.33126 + b * 0.50000) + 128.0;
     let v = (r * 0.50000 + g * -0.41869 + b * -0.08131) + 128.0;
 
-    (y, u, v)
+    (y as u8, u as u8, v as u8)
 }
