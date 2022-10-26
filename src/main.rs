@@ -126,6 +126,26 @@ pub fn convert_parallel(
         });
 }
 
+pub fn convert_tuples_parallel(
+    rgb_pixels: &[u8],
+    y_pixels: &mut [u8],
+    u_pixels: &mut [u8],
+    v_pixels: &mut [u8],
+    chunks_count: usize,
+) {
+    let rgb_chunks = rgb_pixels.chunks(rgb_pixels.len() / chunks_count);
+    let y_chunks = y_pixels.chunks_mut(y_pixels.len() / chunks_count);
+    let u_chunks = u_pixels.chunks_mut(u_pixels.len() / chunks_count);
+    let v_chunks = v_pixels.chunks_mut(v_pixels.len() / chunks_count);
+
+    let iter = izip!(rgb_chunks, y_chunks, u_chunks, v_chunks);
+
+    iter.par_bridge()
+        .for_each(|(rgb_chunk, y_chunk, u_chunk, v_chunk)| {
+            convert_tuples(rgb_chunk, y_chunk, u_chunk, v_chunk);
+        });
+}
+
 fn rgb_to_yuv(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
     let r = r as f32;
     let g = g as f32;
