@@ -5,11 +5,11 @@ pub mod edge;
 
 use std::fmt::{Debug, Display};
 
-fn normalize(x: u8) -> f64 {
+pub fn normalize(x: u8) -> f64 {
     (x as f64) / 255.0
 }
 
-fn denormalize(v: f64) -> u8 {
+pub fn denormalize(v: f64) -> u8 {
     f64::round(v * 255.0) as u8
 }
 

@@ -1,10 +1,10 @@
 use image::GrayImage;
 
-use crate::{denormalize, normalize, Matrix};
+use crate::{denormalize, edge::Edge, normalize, Matrix};
 
 mod kernel;
 
-pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f64) {
+pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f64) -> Matrix<Edge> {
     let pixels = Matrix::new(
         image
             .as_raw()
@@ -14,7 +14,7 @@ pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f6
         image.width() as usize,
         image.height() as usize,
     );
-    let (drog_x_kernel, _drog_y_kernel) = kernel::drog(kernel_size, sigma);
+    let (drog_x_kernel, drog_y_kernel) = kernel::drog(kernel_size, sigma);
 
     let drog_x_pixels = perform_convolution(&pixels, &drog_x_kernel);
     GrayImage::from_vec(
@@ -29,6 +29,29 @@ pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f6
     .unwrap()
     .save("outputs/myownlena_drog_x.png")
     .unwrap();
+
+    let drog_y_pixels = perform_convolution(&pixels, &drog_y_kernel);
+    GrayImage::from_vec(
+        drog_y_pixels.width() as u32,
+        drog_y_pixels.height() as u32,
+        drog_y_pixels
+            .values()
+            .iter()
+            .map(|p| denormalize(*p))
+            .collect(),
+    )
+    .unwrap()
+    .save("outputs/myownlena_drog_y.png")
+    .unwrap();
+
+    let edge_values = drog_x_pixels
+        .values()
+        .iter()
+        .zip(drog_y_pixels.values().iter())
+        .map(|(x, y)| Edge::new(*x, *y))
+        .collect::<Vec<Edge>>();
+
+    Matrix::new(edge_values, image.width() as usize, image.height() as usize)
 }
 
 pub fn perform_convolution(pixels: &Matrix<f64>, kernel: &Matrix<f64>) -> Matrix<f64> {
@@ -81,22 +104,15 @@ mod tests {
 
     #[test]
     fn test_conv() {
-        let kernel = Matrix::new(
-            vec![
-                -1.0, 0.0, 1.0,
-                -2.0, 0.0, 2.0,
-                -1.0, 0.0, 1.0,
-            ], 3, 3
-        );
+        let kernel = Matrix::new(vec![-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0], 3, 3);
 
         let mut image = Matrix::new(
             vec![
-                0.5, 0.5, 0.5, 0.5, 0.5,
-                0.5, 0.5, 0.5, 0.5, 0.5,
-                0.5, 0.5, 0.5, 0.5, 0.5,
-                0.5, 0.5, 0.5, 0.5, 0.5,
-                0.5, 0.5, 0.5, 0.5, 0.5,
-            ], 5, 5
+                0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+                0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+            ],
+            5,
+            5,
         );
 
         perform_convolution(&mut image, &kernel);
