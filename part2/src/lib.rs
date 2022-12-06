@@ -54,6 +54,22 @@ impl<T: Copy> Matrix<T> {
         self.check_indices(x, y);
         self.values[y * self.width + x] = value
     }
+
+    pub fn flipped(&self) -> Self {
+        let mut flipped_matrix = Self {
+            values: self.values.clone(),
+            width: self.height,
+            height: self.width
+        };
+
+        for x in 0..self.width {
+            for y in 0..self.height {
+                flipped_matrix.set(x, y, self.get(self.width - 1 - x, self.height - 1 - y));
+            }
+        }
+
+        flipped_matrix 
+    }
 }
 
 impl<T: Copy> Clone for Matrix<T> {
