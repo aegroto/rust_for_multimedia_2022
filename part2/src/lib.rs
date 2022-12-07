@@ -1,6 +1,6 @@
 pub mod drog;
 pub mod edge;
-// pub mod nonmax;
+pub mod nonmax;
 // pub mod hysteresis;
 
 use std::fmt::{Debug, Display};
