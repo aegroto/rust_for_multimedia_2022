@@ -1,29 +1,51 @@
+use std::f64::consts::PI;
+
 use crate::Matrix;
 
-pub fn drog(size: usize, std_dev: f64) -> (Matrix<f64>, Matrix<f64>) {
-    let stride = (size >> 1) as f64;
-    let exp_coefficient = -0.5 / (std_dev * std_dev);
-    let coefficient = 1.0 / std_dev;
-    let allocation = size * size;
-    let std_dev_pow = std_dev.powi(2);
+pub fn drog_x(size: usize, sigma: f64) -> Matrix<f64> {
+    let mut kernel = Matrix::new(
+        vec![0.0; size * size], size, size
+    );
 
-    // Set the values according to the gaussian function
-    let mut x_data = std::vec![0.0; allocation];
-    let mut y_data = std::vec![0.0; allocation];
+    let dev = sigma * sigma;
 
-    for i in 0..allocation {
-        let r = (i / size) as f64 - stride;
-        let c = (i % size) as f64 - stride;
+    let mut sum = 0.0;
 
-        let x_sq = r * r + c * c;
-        let gaussian_coefficient = coefficient * f64::exp(x_sq * exp_coefficient);
+    for x in 0..size {
+        for y in 0..size {
+            let xf = (x as i32 - (size/2) as i32) as f64;
+            let yf = (y as i32 - (size/2) as i32) as f64;
 
-        x_data[i] = -(r / std_dev_pow) * gaussian_coefficient;
-        y_data[i] = -(c / std_dev_pow) * gaussian_coefficient;
+            // let gaussian_sample = (1.0 / ((2.0 * PI).sqrt() * dev)) * f64::exp(-(xf*xf + yf*yf) / (2.0 * dev));
+            let gaussian_sample = f64::exp(-(xf*xf + yf*yf) / (2.0 * dev));
+            // let value = -(xf/dev) * gaussian_sample;
+            let value = -(xf/dev) * gaussian_sample;
+            kernel.set(y, x, value);
+
+            sum += value.abs();
+        }
     }
 
-    (
-        Matrix::new(x_data.to_vec(), size, size),
-        Matrix::new(y_data.to_vec(), size, size),
-    )
+    println!("{}", sum);
+
+    let normalization_factor = 1.0; 
+    println!("{}", normalization_factor);
+
+    for x in 0..size {
+        for y in 0..size {
+            let normalized_value = kernel.get(x, y) * normalization_factor;
+
+            // let xf = (x as i32 - (size/2) as i32) as f64;
+            // let value = -(xf/(dev)) * normalized_value;
+            let value = normalized_value;
+
+            kernel.set(x, y, value);
+        }
+    }
+
+    kernel
+}
+
+pub fn drog_y(size: usize, sigma: f64) -> Matrix<f64> {
+    drog_x(size, sigma).transposed()
 }

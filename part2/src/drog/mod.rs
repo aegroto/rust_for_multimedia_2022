@@ -2,7 +2,7 @@ use image::GrayImage;
 
 use crate::{denormalize, edge::Edge, normalize, Matrix};
 
-mod kernel;
+pub mod kernel;
 
 pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f64) -> Matrix<Edge> {
     let pixels = Matrix::new(
@@ -14,7 +14,10 @@ pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f6
         image.width() as usize,
         image.height() as usize,
     );
-    let (drog_x_kernel, drog_y_kernel) = kernel::drog(kernel_size, sigma);
+    let (drog_x_kernel, drog_y_kernel) = (
+        kernel::drog_x(kernel_size, sigma),
+        kernel::drog_y(kernel_size, sigma),
+    );
 
     let drog_x_pixels = perform_convolution(&pixels, &drog_x_kernel);
     GrayImage::from_vec(

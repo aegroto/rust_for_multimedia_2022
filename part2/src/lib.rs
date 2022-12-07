@@ -68,8 +68,8 @@ impl<T: Copy> Matrix<T> {
     pub fn flipped(&self) -> Self {
         let mut flipped_matrix = Self {
             values: self.values.clone(),
-            width: self.height,
-            height: self.width
+            width: self.width,
+            height: self.height
         };
 
         for x in 0..self.width {
@@ -79,6 +79,22 @@ impl<T: Copy> Matrix<T> {
         }
 
         flipped_matrix 
+    }
+
+    pub fn transposed(&self) -> Self {
+        let mut transposed = Self {
+            values: self.values.clone(),
+            width: self.height,
+            height: self.width
+        };
+
+        for x in 0..self.width {
+            for y in 0..self.height {
+                transposed.set(x, y, self.get(y, x));
+            }
+        }
+
+        transposed 
     }
 }
 
