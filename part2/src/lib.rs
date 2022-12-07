@@ -1,9 +1,11 @@
 pub mod drog;
 pub mod edge;
 pub mod nonmax;
-// pub mod hysteresis;
+pub mod hysteresis;
 
 use std::fmt::{Debug, Display};
+
+use edge::ThresholdedEdge;
 
 pub fn normalize(x: u8) -> f64 {
     (x as f64) / 255.0
@@ -11,6 +13,14 @@ pub fn normalize(x: u8) -> f64 {
 
 pub fn denormalize(v: f64) -> u8 {
     f64::round(v * 255.0) as u8
+}
+
+pub fn thresholded_edge_to_pixel(edge: ThresholdedEdge) -> u8 {
+    match edge {
+        ThresholdedEdge::STRONG => 255,
+        ThresholdedEdge::WEAK => 32,
+        ThresholdedEdge::NULL => 0,
+    }
 }
 
 pub struct Matrix<T: Copy> {
