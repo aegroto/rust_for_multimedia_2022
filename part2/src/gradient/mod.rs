@@ -41,37 +41,6 @@ pub fn perform_gaussian_plus_sobel_convolution(
     Matrix::new(edge_values, image.width() as usize, image.height() as usize)
 }
 
-pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f64) -> Matrix<Edge> {
-    let pixels = Matrix::new(
-        image
-            .as_raw()
-            .iter()
-            .map(|p| normalize(*p))
-            .collect::<Vec<f64>>(),
-        image.width() as usize,
-        image.height() as usize,
-    );
-    let (drog_x_kernel, drog_y_kernel) = (
-        kernel::drog_x(kernel_size, sigma),
-        kernel::drog_y(kernel_size, sigma),
-    );
-
-    let drog_x_pixels = perform_convolution(&pixels, &drog_x_kernel);
-    dump_matrix(&cast_for_dump(&drog_x_pixels), "drog_x");
-
-    let drog_y_pixels = perform_convolution(&pixels, &drog_y_kernel);
-    dump_matrix(&cast_for_dump(&drog_y_pixels), "drog_y");
-
-    let edge_values = drog_x_pixels
-        .values()
-        .iter()
-        .zip(drog_y_pixels.values().iter())
-        .map(|(x, y)| Edge::new(*x, *y))
-        .collect::<Vec<Edge>>();
-
-    Matrix::new(edge_values, image.width() as usize, image.height() as usize)
-}
-
 pub fn perform_convolution(pixels: &Matrix<f64>, kernel: &Matrix<f64>) -> Matrix<f64> {
     let mut convoluted_pixels = pixels.clone();
 
