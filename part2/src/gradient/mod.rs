@@ -1,8 +1,45 @@
 use image::GrayImage;
 
-use crate::{denormalize, edge::Edge, normalize, Matrix};
+use crate::{cast_for_dump, dump_matrix, edge::Edge, normalize, Matrix};
 
 pub mod kernel;
+
+pub fn perform_gaussian_plus_sobel_convolution(
+    image: &GrayImage,
+    kernel_size: usize,
+    sigma: f64,
+) -> Matrix<Edge> {
+    let pixels = Matrix::new(
+        image
+            .as_raw()
+            .iter()
+            .map(|p| normalize(*p))
+            .collect::<Vec<f64>>(),
+        image.width() as usize,
+        image.height() as usize,
+    );
+    let gaussian_kernel = kernel::gaussian(kernel_size, sigma);
+
+    let blurred_pixels = perform_convolution(&pixels, &gaussian_kernel);
+    dump_matrix(&cast_for_dump(&blurred_pixels), "gaussian");
+
+    let sobel_x_kernel = Matrix::new(vec![-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0], 3, 3);
+    let x_gradient_pixels = perform_convolution(&blurred_pixels, &sobel_x_kernel);
+    dump_matrix(&cast_for_dump(&x_gradient_pixels), "x_gradient");
+
+    let sobel_y_kernel = Matrix::new(vec![1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0], 3, 3);
+    let y_gradient_pixels = perform_convolution(&blurred_pixels, &sobel_y_kernel);
+    dump_matrix(&cast_for_dump(&y_gradient_pixels), "y_gradient");
+
+    let edge_values = x_gradient_pixels
+        .values()
+        .iter()
+        .zip(x_gradient_pixels.values().iter())
+        .map(|(x, y)| Edge::new(*x, *y))
+        .collect::<Vec<Edge>>();
+
+    Matrix::new(edge_values, image.width() as usize, image.height() as usize)
+}
 
 pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f64) -> Matrix<Edge> {
     let pixels = Matrix::new(
@@ -20,32 +57,10 @@ pub fn perform_drog_convolution(image: &GrayImage, kernel_size: usize, sigma: f6
     );
 
     let drog_x_pixels = perform_convolution(&pixels, &drog_x_kernel);
-    GrayImage::from_vec(
-        drog_x_pixels.width() as u32,
-        drog_x_pixels.height() as u32,
-        drog_x_pixels
-            .values()
-            .iter()
-            .map(|p| denormalize(*p))
-            .collect(),
-    )
-    .unwrap()
-    .save("outputs/myownlena_drog_x.png")
-    .unwrap();
+    dump_matrix(&cast_for_dump(&drog_x_pixels), "drog_x");
 
     let drog_y_pixels = perform_convolution(&pixels, &drog_y_kernel);
-    GrayImage::from_vec(
-        drog_y_pixels.width() as u32,
-        drog_y_pixels.height() as u32,
-        drog_y_pixels
-            .values()
-            .iter()
-            .map(|p| denormalize(*p))
-            .collect(),
-    )
-    .unwrap()
-    .save("outputs/myownlena_drog_y.png")
-    .unwrap();
+    dump_matrix(&cast_for_dump(&drog_y_pixels), "drog_y");
 
     let edge_values = drog_x_pixels
         .values()
